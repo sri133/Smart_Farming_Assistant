@@ -7,7 +7,7 @@ import os
 # ---------------------------------------
 # CONFIGURE GEMINI (Use Streamlit Secrets)
 # ---------------------------------------
-genai.configure(api_key="AIzaSyC7yr1V-9zqTKSi2y_ypnuXcObjglI8L4g")
+genai.configure(api_key=)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 # ---------------------------------------
@@ -157,3 +157,4 @@ if page == "Image-based Analysis":
 
                 except Exception as e:
                     st.error(f"Error: {e}")
+
