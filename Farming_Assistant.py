@@ -181,14 +181,23 @@ User question: {prompt_text}
 
                     # Generate Viva Q&A suggestions
                     viva_prompt = f"""
-Based on the following plant analysis:
+You are an examiner preparing viva questions for a student based on a plant image analysis.
+
+Here is the analysis:
 
 {response.text}
 
-Generate 3–5 likely viva questions a teacher might ask, with short, concise answers suitable for a student.
-Format as:
-Q1: ...
-A1: ...
+Instructions:
+- Generate 3–5 likely viva questions a teacher might ask.
+- Provide short, clear answers suitable for a student.
+- Use the format exactly like this:
+Q1: <question>
+A1: <answer>
+Q2: <question>
+A2: <answer>
+...
+- Do not add extra text or explanations.
+- Focus only on the analysis above (do not invent unrelated details).
 """
 
                     viva_response = model.generate_content(
@@ -204,3 +213,4 @@ A1: ...
 
                 except Exception as e:
                     st.error(f"Error: {e}")
+
