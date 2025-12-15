@@ -28,7 +28,6 @@ page = st.sidebar.radio("Go to:", ["Text-based Advice", "Image-based Analysis"])
 # CLEANED RESPONSE FORMATTER (TEXT ONLY)
 # ================================================================
 def format_output(text):
-    # Split first sentence for diagnosis summary
     summary = text.split('.')[0] + '.'
 
     cleaned = f"""
@@ -130,7 +129,6 @@ if page == "Image-based Analysis":
         if st.button("Analyze"):
             with st.spinner("Analyzing image responsibly..."):
                 try:
-                    # Main image analysis prompt
                     analysis_prompt = f"""
 You are an agriculture and plant health expert.
 
@@ -179,38 +177,5 @@ User question: {prompt_text}
                     st.success("Image Analysis Result:")
                     st.markdown(result_text)
 
-                    # Generate Viva Q&A suggestions
-                    viva_prompt = f"""
-You are an examiner preparing viva questions for a student based on a plant image analysis.
-
-Here is the analysis:
-
-{response.text}
-
-Instructions:
-- Generate 3–5 likely viva questions a teacher might ask.
-- Provide short, clear answers suitable for a student.
-- Use the format exactly like this:
-Q1: <question>
-A1: <answer>
-Q2: <question>
-A2: <answer>
-...
-- Do not add extra text or explanations.
-- Focus only on the analysis above (do not invent unrelated details).
-"""
-
-                    viva_response = model.generate_content(
-                        viva_prompt,
-                        generation_config={
-                            "temperature": 0.3,
-                            "max_output_tokens": 500
-                        }
-                    )
-
-                    st.info("💡 Suggested Viva Q&A:")
-                    st.markdown(viva_response.text)
-
                 except Exception as e:
                     st.error(f"Error: {e}")
-
