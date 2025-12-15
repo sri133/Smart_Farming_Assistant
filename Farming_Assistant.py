@@ -7,7 +7,7 @@ import os
 # ---------------------------------------
 # CONFIGURE GEMINI (Use Streamlit Secrets)
 # ---------------------------------------
-genai.configure(api_key=)
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 # ---------------------------------------
@@ -70,7 +70,6 @@ if page == "Text-based Advice":
         if user_query.strip():
             with st.spinner("Generating structured advice..."):
                 try:
-                    # Strong prompt engineering for FA-2
                     prompt = f"""
                     You are an agricultural expert.
 
@@ -98,7 +97,6 @@ if page == "Text-based Advice":
             st.warning("Please type a question.")
 
 
-
 # ================================================================
 # 2️⃣ IMAGE-BASED ANALYSIS PAGE
 # ================================================================
@@ -108,18 +106,15 @@ if page == "Image-based Analysis":
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        # Load image
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Image", use_container_width=True)
 
-        # Convert to bytes
         buffer = io.BytesIO()
         image.save(buffer, format=image.format)
         img_bytes = buffer.getvalue()
 
         mime = uploaded_file.type
 
-        # Optional prompt
         prompt_text = st.text_input(
             "Ask something about this image:",
             value="What does this image show and what actions should a farmer take?"
@@ -157,4 +152,3 @@ if page == "Image-based Analysis":
 
                 except Exception as e:
                     st.error(f"Error: {e}")
-
