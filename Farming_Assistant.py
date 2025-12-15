@@ -14,7 +14,10 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 # ---------------------------------------
 st.set_page_config(page_title="Smart Farming Assistant", page_icon="🌾", layout="wide")
 st.title("🌾 Smart Farming Assistant (FA-2 Project)")
-st.write("This assistant provides **cleaned, structured, and justified** agricultural advice using Gemini 2.5 Flash.")
+st.write(
+    "This assistant provides **clean, structured, and responsible** agricultural advice "
+    "using AI, suitable for school-level evaluation."
+)
 
 # Sidebar
 st.sidebar.header("Navigation")
@@ -39,14 +42,14 @@ def format_output(text):
 ---
 
 **3️⃣ Short Justification:**  
-The advice is based on known agricultural best practices and common crop patterns relevant to the problem described.
+The advice is based on common agricultural practices and known crop health patterns relevant to the problem described.
 
 ---
 
 **4️⃣ Monitoring Steps:**  
-- Recheck conditions every 3–5 days  
-- Observe changes in crop health  
-- Update the assistant if symptoms change
+- Review crop condition every 3–5 days  
+- Observe changes in symptoms or plant health  
+- Update the assistant if conditions change  
 
 ---
 """
@@ -73,7 +76,7 @@ Provide a clean, structured response using:
 3. Justification (2 lines)
 4. Monitoring steps (2–3 bullet points)
 
-Keep language simple and school-appropriate.
+Use simple, school-appropriate language.
 Question: {user_query}
 """
 
@@ -95,7 +98,7 @@ Question: {user_query}
 
 
 # ================================================================
-# 2️⃣ IMAGE-BASED ANALYSIS PAGE
+# 2️⃣ IMAGE-BASED ANALYSIS PAGE (IMPROVED)
 # ================================================================
 if page == "Image-based Analysis":
     st.header("🖼️ Upload an Image for Analysis")
@@ -117,29 +120,33 @@ if page == "Image-based Analysis":
 
         prompt_text = st.text_input(
             "Ask something about this image:",
-            value="What does this image show, what is the probable disease, and what actions should be taken?"
+            value="What does this image show and what actions should be taken?"
         )
 
         if st.button("Analyze"):
-            with st.spinner("Analyzing image and generating expert output..."):
+            with st.spinner("Analyzing image responsibly..."):
                 try:
                     prompt = f"""
-You are an agriculture and plant disease expert.
+You are an agriculture and plant health expert.
 
-Analyze the given plant image and respond in the following format ONLY:
+Analyze the given plant image and respond in the format below ONLY.
+Be careful and responsible. If the diagnosis is not certain, clearly say "probable".
 
 ### Summary / Probable Diagnosis
-(1–2 lines, mention if diagnosis is probable)
+- State the most likely cause
+- Mention 1 possible alternative if relevant
 
 ### Recommended Actions
-- 3–5 clear and practical steps
+- 3–5 safe, practical steps
+- Avoid strong chemical prescriptions
+- Use phrases like "if infestation persists" or "as appropriate"
 
 ### Justification
-- Mention visible features from the image
-- Explain why this disease is suspected
+- Refer to visible features in the image
+- Explain why this diagnosis is suspected
 
 ### Monitoring Steps
-- 2–3 simple follow-up checks
+- 2–3 clear follow-up checks with time references
 
 Do NOT repeat headings.
 Do NOT add extra sections.
@@ -162,7 +169,6 @@ User question: {prompt_text}
                     )
 
                     st.success("Image Analysis Result:")
-                    # IMPORTANT: NO re-formatting here
                     st.markdown(response.text)
 
                 except Exception as e:
