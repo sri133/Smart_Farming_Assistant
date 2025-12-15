@@ -84,7 +84,7 @@ Question: {user_query}
                         prompt,
                         generation_config={
                             "temperature": 0.3,
-                            "max_output_tokens": 1500
+                            "max_output_tokens": 4000
                         }
                     )
 
@@ -173,3 +173,4 @@ User question: {prompt_text}
 
                 except Exception as e:
                     st.error(f"Error: {e}")
+
