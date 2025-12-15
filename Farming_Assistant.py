@@ -4,7 +4,7 @@ import google.generativeai as genai
 import io
 
 # ---------------------------------------
-# CONFIGURE GEMINI (Use Streamlit Secrets)
+# CONFIGURE GEMINI
 # ---------------------------------------
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-2.5-flash")
@@ -28,11 +28,15 @@ page = st.sidebar.radio("Go to:", ["Text-based Advice", "Image-based Analysis"])
 # CLEANED RESPONSE FORMATTER (TEXT ONLY)
 # ================================================================
 def format_output(text):
+    summary = text.split('.')[0] + '.'
+
     cleaned = f"""
 ### 🧩 Cleaned AI Response
 
 **1️⃣ Summary / Diagnosis:**  
-{text.split('.')[0]}.  
+{summary}  
+
+*Disclaimer: This is an AI-generated probable diagnosis. Please consult a professional for confirmation.*
 
 ---
 
@@ -98,7 +102,7 @@ Question: {user_query}
 
 
 # ================================================================
-# 2️⃣ IMAGE-BASED ANALYSIS PAGE (IMPROVED)
+# 2️⃣ IMAGE-BASED ANALYSIS PAGE
 # ================================================================
 if page == "Image-based Analysis":
     st.header("🖼️ Upload an Image for Analysis")
@@ -115,7 +119,6 @@ if page == "Image-based Analysis":
         buffer = io.BytesIO()
         image.save(buffer, format=image.format)
         img_bytes = buffer.getvalue()
-
         mime = uploaded_file.type
 
         prompt_text = st.text_input(
@@ -126,7 +129,7 @@ if page == "Image-based Analysis":
         if st.button("Analyze"):
             with st.spinner("Analyzing image responsibly..."):
                 try:
-                    prompt = f"""
+                    analysis_prompt = f"""
 You are an agriculture and plant health expert.
 
 Analyze the given plant image and respond in the format below ONLY.
@@ -156,7 +159,7 @@ User question: {prompt_text}
 
                     response = model.generate_content(
                         [
-                            prompt,
+                            analysis_prompt,
                             {
                                 "mime_type": mime,
                                 "data": img_bytes
@@ -168,9 +171,11 @@ User question: {prompt_text}
                         }
                     )
 
+                    # Add disclaimer automatically
+                    result_text = response.text + "\n\n*Disclaimer: This is an AI-generated probable diagnosis. Please consult a professional for confirmation.*"
+
                     st.success("Image Analysis Result:")
-                    st.markdown(response.text)
+                    st.markdown(result_text)
 
                 except Exception as e:
                     st.error(f"Error: {e}")
-
