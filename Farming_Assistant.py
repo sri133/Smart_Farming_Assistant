@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image
 import google.generativeai as genai
 import io
-import os
 
 # ---------------------------------------
 # CONFIGURE GEMINI (Use Streamlit Secrets)
@@ -23,14 +22,9 @@ page = st.sidebar.radio("Go to:", ["Text-based Advice", "Image-based Analysis"])
 
 
 # ================================================================
-# CLEANED RESPONSE FORMATTER
+# CLEANED RESPONSE FORMATTER (TEXT ONLY)
 # ================================================================
 def format_output(text):
-    """
-    Converts raw Gemini output into a structured,
-    FA-2-friendly formatted layout.
-    """
-
     cleaned = f"""
 ### 🧩 Cleaned AI Response
 
@@ -45,14 +39,14 @@ def format_output(text):
 ---
 
 **3️⃣ Short Justification:**  
-Gemini identified key features in your input and matched them with known agricultural patterns to ensure accurate, sustainable recommendations.
+The advice is based on known agricultural best practices and common crop patterns relevant to the problem described.
 
 ---
 
 **4️⃣ Monitoring Steps:**  
 - Recheck conditions every 3–5 days  
-- Record changes in symptoms or crop appearance  
-- Update inputs in the assistant for refined advice
+- Observe changes in crop health  
+- Update the assistant if symptoms change
 
 ---
 """
@@ -71,21 +65,24 @@ if page == "Text-based Advice":
             with st.spinner("Generating structured advice..."):
                 try:
                     prompt = f"""
-                    You are an agricultural expert.
+You are an agricultural expert.
 
-                    Provide a clean, structured response using:
-                    1. Summary (one line)
-                    2. Actions (3–5 bullet points)
-                    3. Justification (2 lines)
-                    4. Monitoring steps (2–3 bullet points)
+Provide a clean, structured response using:
+1. Summary (one line)
+2. Actions (3–5 bullet points)
+3. Justification (2 lines)
+4. Monitoring steps (2–3 bullet points)
 
-                    Keep language simple. Avoid long paragraphs.
-                    Question: {user_query}
-                    """
+Keep language simple and school-appropriate.
+Question: {user_query}
+"""
 
                     response = model.generate_content(
                         prompt,
-                        generation_config={"temperature": 0.3, "max_output_tokens": 2000}
+                        generation_config={
+                            "temperature": 0.3,
+                            "max_output_tokens": 1500
+                        }
                     )
 
                     st.success("Here is your structured advice:")
@@ -103,7 +100,10 @@ if page == "Text-based Advice":
 if page == "Image-based Analysis":
     st.header("🖼️ Upload an Image for Analysis")
 
-    uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader(
+        "Upload an image",
+        type=["jpg", "jpeg", "png"]
+    )
 
     if uploaded_file:
         image = Image.open(uploaded_file)
@@ -117,24 +117,35 @@ if page == "Image-based Analysis":
 
         prompt_text = st.text_input(
             "Ask something about this image:",
-            value="What does this image show and what actions should a farmer take?"
+            value="What does this image show, what is the probable disease, and what actions should be taken?"
         )
 
         if st.button("Analyze"):
-            with st.spinner("Analyzing image and generating structured output..."):
+            with st.spinner("Analyzing image and generating expert output..."):
                 try:
                     prompt = f"""
-                    You are a plant pathology and agriculture expert.
+You are an agriculture and plant disease expert.
 
-                    Analyze the given farm image and provide a **FA-2-ready structured response**:
-                    1. Summary / Diagnosis (1–2 lines)
-                    2. Recommended Actions (bullet points)
-                    3. Justification (point out features in the image)
-                    4. Monitoring Steps (2–3 bullets)
-                    Respond concisely.
+Analyze the given plant image and respond in the following format ONLY:
 
-                    User prompt: {prompt_text}
-                    """
+### Summary / Probable Diagnosis
+(1–2 lines, mention if diagnosis is probable)
+
+### Recommended Actions
+- 3–5 clear and practical steps
+
+### Justification
+- Mention visible features from the image
+- Explain why this disease is suspected
+
+### Monitoring Steps
+- 2–3 simple follow-up checks
+
+Do NOT repeat headings.
+Do NOT add extra sections.
+
+User question: {prompt_text}
+"""
 
                     response = model.generate_content(
                         [
@@ -144,11 +155,15 @@ if page == "Image-based Analysis":
                                 "data": img_bytes
                             }
                         ],
-                        generation_config={"temperature": 0.3, "max_output_tokens": 2000}
+                        generation_config={
+                            "temperature": 0.3,
+                            "max_output_tokens": 1500
+                        }
                     )
 
-                    st.success("Structured Image Analysis:")
-                    st.markdown(format_output(response.text))
+                    st.success("Image Analysis Result:")
+                    # IMPORTANT: NO re-formatting here
+                    st.markdown(response.text)
 
                 except Exception as e:
                     st.error(f"Error: {e}")
