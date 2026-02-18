@@ -1,7 +1,7 @@
 import streamlit as st
-from PIL import Image
-import google.generativeai as genai
+from PIL import Image, ImageOps
 import io
+import google.generativeai as genai
 
 # ---------------------------------------
 # CONFIGURE GEMINI
@@ -10,173 +10,102 @@ genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 # ---------------------------------------
-# STREAMLIT PAGE UI
+# STREAMLIT PAGE CONFIG
 # ---------------------------------------
-st.set_page_config(page_title="Smart Farming Assistant", page_icon="🌾", layout="wide")
-st.title("🌾 Smart Farming Assistant (FA-2 Project)")
-st.write(
-    "This assistant provides **clean, structured, and responsible** agricultural advice "
-    "using AI, suitable for school-level evaluation."
-)
+st.set_page_config(page_title="Cronus", page_icon="🌾", layout="wide")
+st.title("🌾 Cronus - Smart Farming Assistant for Tamil Nadu Farmers")
+st.write("Ask anything about farming, crops, land, chemicals, or business ideas and get AI-powered advice.")
 
-# Sidebar
+# Sidebar navigation
 st.sidebar.header("Navigation")
-page = st.sidebar.radio("Go to:", ["Text-based Advice", "Image-based Analysis"])
+page = st.sidebar.radio("Select a Page:", ["Land", "Chemical", "Crop Suggestion", "Farming Activity", "Farming Business Idea", "Image Analysis"])
 
+# ------------------------------------------------
+# Function to call AI directly
+# ------------------------------------------------
+def get_ai_response(user_query):
+    try:
+        response = model.generate_content(
+            user_query,
+            generation_config={"temperature": 0.3, "max_output_tokens": 2000}
+        )
+        return response.text
+    except Exception as e:
+        return f"Error generating AI response: {e}"
 
-# ================================================================
-# CLEANED RESPONSE FORMATTER (TEXT ONLY)
-# ================================================================
-def format_output(text):
-    summary = text.split('.')[0] + '.'
+# ------------------------------------------------
+# TEXT-BASED PAGES
+# ------------------------------------------------
+text_pages = {
+    "Land": "Ask about land preparation, soil management, or irrigation:",
+    "Chemical": "Ask about fertilizers, pesticides, and safe usage:",
+    "Crop Suggestion": "Ask about which crops to grow, rotations, or yield optimization:",
+    "Farming Activity": "Ask for activity tips, best practices, or techniques:",
+    "Farming Business Idea": "Ask about farming-related business ideas with pros and cons:"
+}
 
-    cleaned = f"""
-### 🧩 Cleaned AI Response
-
-**1️⃣ Summary / Diagnosis:**  
-{summary}  
-
-*Disclaimer: This is an AI-generated probable diagnosis. Please consult a professional for confirmation.*
-
----
-
-**2️⃣ Recommended Actions:**  
-- {text.replace('-', '').replace('*', '').strip().replace('\n', '\n- ')}
-
----
-
-**3️⃣ Short Justification:**  
-The advice is based on common agricultural practices and known crop health patterns relevant to the problem described.
-
----
-
-**4️⃣ Monitoring Steps:**  
-- Review crop condition every 3–5 days  
-- Observe changes in symptoms or plant health  
-- Update the assistant if conditions change  
-
----
-"""
-    return cleaned
-
-
-# ================================================================
-# 1️⃣ TEXT-BASED ADVICE PAGE
-# ================================================================
-if page == "Text-based Advice":
-    st.header("📝 Text-based Farming Advice")
-    user_query = st.text_area("Ask something about farming or sustainability:")
-
-    if st.button("Get Advice"):
-        if user_query.strip():
-            with st.spinner("Generating structured advice..."):
-                try:
-                    prompt = f"""
-You are an agricultural expert.
-
-Provide a clean, structured response using:
-1. Summary (one line)
-2. Actions (3–5 bullet points)
-3. Justification (2 lines)
-4. Monitoring steps (2–3 bullet points)
-
-Use simple, school-appropriate language.
-Question: {user_query}
-"""
-
-                    response = model.generate_content(
-                        prompt,
-                        generation_config={
-                            "temperature": 0.3,
-                            "max_output_tokens": 10000
-                        }
-                    )
-
-                    st.success("Here is your structured advice:")
-                    st.markdown(format_output(response.text))
-
-                except Exception as e:
-                    st.error(f"Error: {e}")
+if page in text_pages:
+    st.header(f"📝 {page}")
+    query = st.text_area(text_pages[page])
+    if st.button("Get Advice", key=page):
+        if query.strip():
+            with st.spinner(f"Generating {page.lower()} advice..."):
+                st.markdown(get_ai_response(query))
         else:
             st.warning("Please type a question.")
 
-
-# ================================================================
-# 2️⃣ IMAGE-BASED ANALYSIS PAGE
-# ================================================================
-if page == "Image-based Analysis":
-    st.header("🖼️ Upload an Image for Analysis")
-
-    uploaded_file = st.file_uploader(
-        "Upload an image",
-        type=["jpg", "jpeg", "png"]
-    )
+# ------------------------------------------------
+# IMAGE ANALYSIS PAGE
+# ------------------------------------------------
+if page == "Image Analysis":
+    st.header("🖼️ Image-Based Plant Analysis")
+    uploaded_file = st.file_uploader("Upload an image of the plant:", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         image = Image.open(uploaded_file)
+        image = ImageOps.exif_transpose(image)  # fix rotation
+        image.thumbnail((1024, 1024))  # optional: reduce size
         st.image(image, caption="Uploaded Image", use_container_width=True)
 
-        buffer = io.BytesIO()
-        image.save(buffer, format=image.format)
-        img_bytes = buffer.getvalue()
-        mime = uploaded_file.type
-
         prompt_text = st.text_input(
-            "Ask something about this image:",
+            "Ask a question about this image:",
             value="What does this image show and what actions should be taken?"
         )
 
-        if st.button("Analyze"):
-            with st.spinner("Analyzing image responsibly..."):
-                try:
-                    analysis_prompt = f"""
+        if st.button("Analyze Image", key="image_analysis"):
+            if prompt_text.strip():
+                with st.spinner("Analyzing image..."):
+                    try:
+                        buffer = io.BytesIO()
+                        image.save(buffer, format=image.format)
+                        img_bytes = buffer.getvalue()
+                        mime = uploaded_file.type
+
+                        # AI multi-modal input (text + image)
+                        analysis_prompt = f"""
 You are an agriculture and plant health expert.
 
-Analyze the given plant image and respond in the format below ONLY.
-Be careful and responsible. If the diagnosis is not certain, clearly say "probable".
+Analyze the given plant image and respond clearly and responsibly.
+Include:
+- Probable diagnosis / issue
+- 3–5 practical recommended actions
+- Short justification based on visible features
+- Monitoring steps
 
-### Summary / Probable Diagnosis
-- State the most likely cause
-- Mention 1 possible alternative if relevant
-
-### Recommended Actions
-- 3–5 safe, practical steps
-- Avoid strong chemical prescriptions
-- Use phrases like "if infestation persists" or "as appropriate"
-
-### Justification
-- Refer to visible features in the image
-- Explain why this diagnosis is suspected
-
-### Monitoring Steps
-- 2–3 clear follow-up checks with time references
-
-Do NOT repeat headings.
-Do NOT add extra sections.
-
-User question: {prompt_text}
+Question: {prompt_text}
 """
+                        response = model.generate_content(
+                            [
+                                analysis_prompt,
+                                {"mime_type": mime, "data": img_bytes}
+                            ],
+                            generation_config={"temperature": 0.3, "max_output_tokens": 2000}
+                        )
 
-                    response = model.generate_content(
-                        [
-                            analysis_prompt,
-                            {
-                                "mime_type": mime,
-                                "data": img_bytes
-                            }
-                        ],
-                        generation_config={
-                            "temperature": 0.3,
-                            "max_output_tokens": 10000
-                        }
-                    )
+                        st.success("AI Image Analysis Result:")
+                        st.markdown(response.text + "\n\n*Disclaimer: This is an AI-generated probable diagnosis. Please consult a professional for confirmation.*")
 
-                    # Add disclaimer automatically
-                    result_text = response.text + "\n\n*Disclaimer: This is an AI-generated probable diagnosis. Please consult a professional for confirmation.*"
-
-                    st.success("Image Analysis Result:")
-                    st.markdown(result_text)
-
-                except Exception as e:
-                    st.error(f"Error: {e}")
-
+                    except Exception as e:
+                        st.error(f"Error generating image analysis: {e}")
+            else:
+                st.warning("Please type a question about the image.")
