@@ -26,7 +26,16 @@ text_dict = {
     "English": {
         "title": "🌾 Cronus - Smart Farming Assistant for Tamil Nadu Farmers",
         "desc": "Ask anything about farming, crops, land, chemicals, or business ideas and get AI-powered advice.",
-        "nav": ["Land", "Chemical", "Crop Suggestion", "Farming Activity", "Farming Business Idea", "Image Analysis"],
+        "nav": [
+    "Land",
+    "Chemical",
+    "Crop Suggestion",
+    "Farming Activity",
+    "Farming Business Idea",
+    "Image Analysis",
+    "Useful Websites / பயனுள்ள இணையதளங்கள்"
+],
+
         "placeholders": {
             "Land": "Ask about land preparation, soil management, or irrigation:",
             "Chemical": "Ask about fertilizers, pesticides, and safe usage:",
@@ -70,6 +79,79 @@ text_dict = {
 }
 
 txt = text_dict[language]
+
+
+# -------------------------------
+# USEFUL WEBSITES PAGE
+# -------------------------------
+if page == "Useful Websites / பயனுள்ள இணையதளங்கள்":
+    st.header("🔗 Useful Websites for Farmers / விவசாயிகளுக்கான பயனுள்ள இணையதளங்கள்")
+    
+    websites = [
+        {
+            "url": "https://www.tnagrisnet.tn.gov.in/esevai/",
+            "title_en": "TN Agri E-Services",
+            "title_ta": "தமிழ்நாடு விவசாய E-சேவைகள்",
+            "desc_en": "Official Tamil Nadu government portal for agricultural services like scheme status, certificates, soil test, farmer records.",
+            "desc_ta": "தமிழ்நாட்டுத் தமிழக அரசின் விவசாய சேவைகள்: திட்ட நிலை, சான்றிதழ்கள், மண் பரிசோதனை, விவசாயி பதிவுகள்."
+        },
+        {
+            "url": "https://play.google.com/store/apps/details?id=agri.tnagri&hl=en_IN",
+            "title_en": "TNAgrI (Mobile App)",
+            "title_ta": "TNAgrI (மொபைல் செயலி)",
+            "desc_en": "Mobile app for Tamil Nadu agriculture services; access schemes, weather updates, notifications and farmer info.",
+            "desc_ta": "தமிழ்நாடு விவசாய சேவைகளுக்கான செயலி; திட்ட தகவல், வானிலை, அறிவிப்புகள் மற்றும் விவசாயி தகவல்."
+        },
+        {
+            "url": "http://www.agritech.tnau.ac.in/",
+            "title_en": "TNAU Agritech",
+            "title_ta": "TNAU Agritech",
+            "desc_en": "Tamil Nadu Agricultural University’s Agritech portal with scientific crop tips, technologies, and educational resources.",
+            "desc_ta": "தமிழ்நாடு வேளாண்மை பல்கலைக்கழகத்தின் Agritech தளம்; விஞ்ஞானப் பயிர் அறிவுரைகள் மற்றும் தொழில்நுட்பங்கள்."
+        },
+        {
+            "url": "https://tnhorticulture.tn.gov.in/",
+            "title_en": "TN Horticulture Department",
+            "title_ta": "தமிழ்நாடு விளைவுப் பகுதிகள் துறை",
+            "desc_en": "Official site for Tamil Nadu horticulture — plant protection, nursery info, garden programs and schemes.",
+            "desc_ta": "தமிழ்நாடு விளைவுப் பிரிவு அதிகார இணையதளம்; பிளாக் பாதுகாப்பு, நர்சரி தகவல், தோட்டத்திட்டங்கள்."
+        },
+        {
+            "url": "https://enam.gov.in/web/stakeholders-Involved/farmers",
+            "title_en": "eNAM (National Agriculture Market)",
+            "title_ta": "eNAM (தேசிய விவசாய சந்தை)",
+            "desc_en": "Portal connecting farmers, traders, and markets for transparent pricing and mandi operations.",
+            "desc_ta": "விவசாயிகள், வர்த்தகர்கள் மற்றும் சந்தைகள் இடையே நேரடி விலையில் பரிவர்த்தனை செய்ய உதவும் தளம்."
+        },
+        {
+            "url": "https://kisansarathi.in/",
+            "title_en": "Kisan Sarathi",
+            "title_ta": "கிசான் சாரதி",
+            "desc_en": "AI-based farmer advisory portal offering crop plans, weather forecasts, and customized guidance.",
+            "desc_ta": "பயிர் திட்டம், வானிலை முன்னறிவு மற்றும் தனிப்பயன் அறிவுரைகள் வழங்கும் விவசாயி உதவி தளம்."
+        },
+        {
+            "url": "https://pmkisan.gov.in/",
+            "title_en": "PM-Kisan Scheme",
+            "title_ta": "பிஎம்-கிசான் திட்டம்",
+            "desc_en": "Government of India income support scheme for farmers; registration, beneficiary status, payment info.",
+            "desc_ta": "இந்திய அரசின் விவசாயிகளுக்கான வருமான உதவி திட்டம்; பதிவு, பயனாளி நிலை, பணம் விவரம்."
+        },
+        {
+            "url": "https://agrimachinery.nic.in/index/index",
+            "title_en": "Agricultural Machinery Portal",
+            "title_ta": "வேளாண் இயந்திரங்கள் போர்டல்",
+            "desc_en": "Central government’s portal on farm machinery — schemes, subsidies, and equipment info.",
+            "desc_ta": "மத்திய அரசின் வேளாண் இயந்திர தகவல் தளம்; திட்டம், சலுகை, உபகரண விவரம்."
+        }
+    ]
+
+    for site in websites:
+        st.markdown(f"### 🔗 [{site['title_en']} / {site['title_ta']}]({site['url']})")
+        if language == "Tamil":
+            st.write(site["desc_ta"])
+        else:
+            st.write(site["desc_en"])
 
 # -------------------------------
 # PAGE TITLE & DESCRIPTION
@@ -161,3 +243,4 @@ if page == txt["nav"][-1]:
                         st.error(f"Error generating image analysis: {e}")
             else:
                 st.warning(txt["messages"]["type_question"])
+
