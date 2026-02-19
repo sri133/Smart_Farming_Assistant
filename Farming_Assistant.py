@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image, ImageOps
 import io
 import google.generativeai as genai
-import time
 
 # ---------------------------------------
 # PAGE CONFIG
@@ -10,7 +9,7 @@ import time
 st.set_page_config(page_title="Cronus", page_icon="🌾", layout="wide")
 
 # ---------------------------------------
-# LOAD MODEL (Cached)
+# LOAD GEMINI MODEL (Cached)
 # ---------------------------------------
 @st.cache_resource
 def load_model():
@@ -22,7 +21,10 @@ model = load_model()
 # ---------------------------------------
 # LANGUAGE SELECTION
 # ---------------------------------------
-language = st.sidebar.selectbox("Select Language / மொழி தேர்வு:", ["English", "Tamil"])
+language = st.sidebar.selectbox(
+    "Select Language / மொழி தேர்வு:",
+    ["English", "Tamil"]
+)
 
 # ---------------------------------------
 # TEXT DICTIONARY
@@ -43,9 +45,9 @@ text_dict = {
         "placeholders": {
             "Land": "Ask about land preparation, soil management, or irrigation:",
             "Chemical": "Ask about fertilizers, pesticides, and safe usage:",
-            "Crop Suggestion": "Ask about which crops to grow, rotations, or yield optimization:",
-            "Farming Activity": "Ask for activity tips, best practices, or techniques:",
-            "Farming Business Idea": "Ask about farming-related business ideas with pros and cons:",
+            "Crop Suggestion": "Ask about which crops to grow or improve yield:",
+            "Farming Activity": "Ask for best farming techniques:",
+            "Farming Business Idea": "Ask about farming business ideas:",
             "Image": "Ask a question about this image:"
         },
         "buttons": {
@@ -60,7 +62,7 @@ text_dict = {
     },
     "Tamil": {
         "title": "🌾 கிரோனஸ் - தமிழ்நாடு விவசாயிகளுக்கான புத்திசாலி உதவியாளர்",
-        "desc": "விவசாயம், பயிர்கள், நிலம், ரசாயனங்கள் அல்லது வணிகக் கருத்துக்கள் குறித்து கேளுங்கள், AI மூலம் பதில் பெறுங்கள்.",
+        "desc": "விவசாயம், பயிர்கள், நிலம், ரசாயனங்கள் அல்லது வணிகக் கருத்துக்கள் குறித்து கேளுங்கள்.",
         "nav": [
             "நிலை",
             "ரசாயனங்கள்",
@@ -71,11 +73,11 @@ text_dict = {
             "பயனுள்ள இணையதளங்கள்"
         ],
         "placeholders": {
-            "Land": "நிலத் தயாரிப்பு, மண் மேலாண்மை, நீர்ப்பாசனம் பற்றி கேளுங்கள்:",
-            "Chemical": "உரங்கள், பூச்சிக்கொல்லிகள் மற்றும் பாதுகாப்பான பயன்பாடு பற்றி கேளுங்கள்:",
-            "Crop Suggestion": "எந்த பயிர்களை வளர்க்கலாம், சுழற்சி பற்றி கேளுங்கள்:",
-            "Farming Activity": "சிறந்த தொழில்நுட்பங்கள் பற்றி கேளுங்கள்:",
-            "Farming Business Idea": "விவசாய வணிகக் கருத்துக்கள் பற்றி கேளுங்கள்:",
+            "Land": "நிலத் தயாரிப்பு பற்றி கேளுங்கள்:",
+            "Chemical": "உரங்கள் மற்றும் பாதுகாப்பு பற்றி கேளுங்கள்:",
+            "Crop Suggestion": "பயிர் தேர்வு பற்றி கேளுங்கள்:",
+            "Farming Activity": "விவசாய முறைகள் பற்றி கேளுங்கள்:",
+            "Farming Business Idea": "வணிகக் கருத்துகள் பற்றி கேளுங்கள்:",
             "Image": "இந்த படத்தைப் பற்றிக் கேளுங்கள்:"
         },
         "buttons": {
@@ -93,6 +95,54 @@ text_dict = {
 txt = text_dict[language]
 
 # ---------------------------------------
+# BUILD LANGUAGE-SPECIFIC SYSTEM PROMPT
+# ---------------------------------------
+def build_system_prompt(language):
+    if language == "Tamil":
+        return """
+        நீங்கள் 'Cronus' என்ற தமிழ்நாடு விவசாயிகளுக்கான AI உதவியாளர்.
+        பதில்கள் முழுவதும் தமிழ் மொழியில் மட்டும் இருக்க வேண்டும்.
+        ஆங்கில வார்த்தைகள் பயன்படுத்த வேண்டாம்.
+        பாதுகாப்பான மற்றும் நடைமுறை விவசாய ஆலோசனைகள் மட்டும் வழங்கவும்.
+        பதிலை அமைப்புடன் வழங்கவும்:
+        1. விளக்கம்
+        2. நடைமுறை படிகள்
+        3. பாதுகாப்பு குறிப்புகள்
+        4. தமிழ்நாடு தொடர்பு
+        """
+    else:
+        return """
+        You are Cronus, a smart farming assistant for Tamil Nadu farmers.
+        All responses must be strictly in English only.
+        Do not mix Tamil words.
+        Provide safe and practical agriculture advice.
+        Structure answers clearly:
+        1. Explanation
+        2. Steps
+        3. Safety Tips
+        4. Tamil Nadu relevance
+        """
+
+# ---------------------------------------
+# AI RESPONSE FUNCTION
+# ---------------------------------------
+def get_ai_response(user_query):
+    try:
+        system_prompt = build_system_prompt(language)
+
+        response = model.generate_content(
+            [system_prompt, user_query],
+            generation_config={
+                "temperature": 0.3,
+                "max_output_tokens": 1500
+            }
+        )
+        return response.text
+
+    except Exception:
+        return "AI service is temporarily unavailable. Please try again."
+
+# ---------------------------------------
 # TITLE
 # ---------------------------------------
 st.title(txt["title"])
@@ -102,36 +152,6 @@ st.write(txt["desc"])
 # NAVIGATION
 # ---------------------------------------
 page = st.sidebar.radio("Navigation / துவக்கம்:", txt["nav"])
-
-# ---------------------------------------
-# AI FUNCTION
-# ---------------------------------------
-SYSTEM_PROMPT = """
-You are Cronus, a smart farming assistant for Tamil Nadu farmers.
-Provide safe, practical, agriculture-related advice.
-Do not give harmful, illegal, or unsafe instructions.
-Structure answers clearly with:
-1. Explanation
-2. Steps
-3. Safety tips
-4. Tamil Nadu relevance
-"""
-
-def get_ai_response(user_query):
-    try:
-        if language == "Tamil":
-            user_query = f"உங்கள் பதில் தமிழ் மொழியில் அளிக்கவும்:\n{user_query}"
-
-        response = model.generate_content(
-            [SYSTEM_PROMPT, user_query],
-            generation_config={
-                "temperature": 0.3,
-                "max_output_tokens": 1500
-            }
-        )
-        return response.text
-    except Exception:
-        return "AI service is temporarily unavailable. Please try again."
 
 # ---------------------------------------
 # TEXT PAGES
@@ -179,12 +199,11 @@ if page == txt["nav"][5]:
                         image.save(buffer, format="PNG")
                         img_bytes = buffer.getvalue()
 
-                        if language == "Tamil":
-                            prompt_text = f"உங்கள் பதில் தமிழ் மொழியில் அளிக்கவும்:\n{prompt_text}"
+                        system_prompt = build_system_prompt(language)
 
                         response = model.generate_content(
                             [
-                                SYSTEM_PROMPT,
+                                system_prompt,
                                 prompt_text,
                                 {"mime_type": "image/png", "data": img_bytes}
                             ],
@@ -194,9 +213,9 @@ if page == txt["nav"][5]:
                             }
                         )
 
-                        st.success("AI Analysis Result:")
+                        st.success("AI Analysis Result")
                         st.markdown(response.text)
-                        st.info("Disclaimer: This is AI-generated guidance. Consult experts for confirmation.")
+                        st.info("Disclaimer: AI-generated guidance. Consult experts for confirmation.")
 
                     except Exception:
                         st.error("Error generating image analysis.")
@@ -210,21 +229,29 @@ if page == txt["nav"][6]:
     st.header("🔗 Useful Websites")
 
     websites = [
-        ("TN Agri E-Services", "https://www.tnagrisnet.tn.gov.in/esevai/",
+        ("TN Agri E-Services",
+         "https://www.tnagrisnet.tn.gov.in/esevai/",
          "Government agricultural services, scheme status, soil testing."),
-        ("TNAgrI App", "https://play.google.com/store/apps/details?id=agri.tnagri&hl=en_IN",
+        ("TNAgrI App",
+         "https://play.google.com/store/apps/details?id=agri.tnagri&hl=en_IN",
          "Tamil Nadu agriculture mobile app with scheme & weather updates."),
-        ("TNAU Agritech", "http://www.agritech.tnau.ac.in/",
+        ("TNAU Agritech",
+         "http://www.agritech.tnau.ac.in/",
          "Scientific crop practices and university-backed guidance."),
-        ("TN Horticulture", "https://tnhorticulture.tn.gov.in/",
+        ("TN Horticulture",
+         "https://tnhorticulture.tn.gov.in/",
          "Horticulture schemes and plant protection info."),
-        ("eNAM", "https://enam.gov.in/web/stakeholders-Involved/farmers",
+        ("eNAM",
+         "https://enam.gov.in/web/stakeholders-Involved/farmers",
          "National agriculture market for mandi pricing."),
-        ("Kisan Sarathi", "https://kisansarathi.in/",
+        ("Kisan Sarathi",
+         "https://kisansarathi.in/",
          "AI advisory with crop planning & forecasts."),
-        ("PM-Kisan", "https://pmkisan.gov.in/",
+        ("PM-Kisan",
+         "https://pmkisan.gov.in/",
          "Farmer income support scheme portal."),
-        ("Agri Machinery Portal", "https://agrimachinery.nic.in/index/index",
+        ("Agri Machinery Portal",
+         "https://agrimachinery.nic.in/index/index",
          "Farm machinery schemes and subsidy information.")
     ]
 
@@ -232,4 +259,5 @@ if page == txt["nav"][6]:
         st.markdown(f"### 🔗 [{name}]({url})")
         st.write(desc)
         st.markdown("---")
+
 
