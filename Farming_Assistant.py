@@ -134,7 +134,7 @@ def get_ai_response(user_query):
             [system_prompt, user_query],
             generation_config={
                 "temperature": 0.3,
-                "max_output_tokens": 1500
+                "max_output_tokens": 40000
             }
         )
         return response.text
@@ -209,7 +209,7 @@ if page == txt["nav"][5]:
                             ],
                             generation_config={
                                 "temperature": 0.3,
-                                "max_output_tokens": 1500
+                                "max_output_tokens": 20000
                             }
                         )
 
@@ -259,5 +259,6 @@ if page == txt["nav"][6]:
         st.markdown(f"### 🔗 [{name}]({url})")
         st.write(desc)
         st.markdown("---")
+
 
 
